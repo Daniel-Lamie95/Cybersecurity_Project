@@ -88,40 +88,92 @@ class RSA:
             print("Public key not available for encryption")
             return None
         try:
+            if isinstance(plaintext, str):
+                plaintext = plaintext.encode()
+
             ciphertext = self.public_key.encrypt(
-            plaintext.encode(),
-            padding.OAEP(
-                 mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-                 )
+                plaintext,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
             )
-            return base64.b64encode(ciphertext).decode()
+            return ciphertext
         except Exception as e:
             print("Encryption failed:", e)
             return None
 
-    def decrypt_text(self, b64_ciphertext):
+    def decrypt_text(self, ciphertext):
         if not self.private_key:
             print("Private key not available for decryption")
             return None
         try:
-            
-            ciphertext = base64.b64decode(b64_ciphertext)
             plaintext = self.private_key.decrypt(
-            ciphertext,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
+                ciphertext,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
                 )
             )
-            return plaintext.decode()
+            return plaintext
         except Exception as e:
             print("Decryption failed:", e)
             return None
 
-    #def encrypt_file():
+    def encrypt_file(self, file_path, output_path=None):
+        if not self.public_key:
+            print("Public key not available for encryption")
+            return False
+        
+        if output_path is None:
+            output_path = file_path + '.enc'
+        
+        try:
+            with open(file_path, 'rb') as f:
+                plaintext = f.read()
+
+            ciphertext = self.encrypt_text(plaintext)
+
+            if ciphertext is None:
+                return False
+
+            with open(output_path, "wb") as f:
+                f.write(ciphertext)
+
+            print(f"Encrypted file saved to {output_path}")
+            return True
+
+        except Exception as e:
+            print("Encryption failed:", e)
+            return None
+        
+    def decrypt_file(self, file_path, output_path=None):
+        if not self.private_key:
+            print("Private key not available for decryption")
+            return False
+
+        if output_path is None:
+            output_path = file_path.replace(".enc", ".dec")
+
+        try:
+            with open(file_path, "rb") as f:
+                ciphertext = f.read()
+
+            plaintext = self.decrypt_text(ciphertext)
+            if plaintext is None:
+                return False
+
+            with open(output_path, "wb") as f:
+                f.write(plaintext)
+
+            print(f"Decrypted file saved to {output_path}")
+            return True
+
+        except Exception as e:
+            print("Decryption failed:", e)
+            return False    
 
 
 
