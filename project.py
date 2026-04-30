@@ -4,6 +4,69 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import os
 import base64
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+
+
+class AES:
+
+    def _init_(self, password, key_size):
+        self.key_size = key_size
+        hashed_password = SHA256.new(password.encode()).digest()
+        self.key = hashed_password[:key_size // 8]
+
+    def encrypt_file_AES(self):
+        try:
+            with open("plain.txt", "rb") as file:
+                original_data = file.read()
+
+            cipher = AES.new(self.key, AES.MODE_EAX)
+            encrypted_data, tag = cipher.encrypt_and_digest(original_data)
+
+            with open("encrypted.bin", "wb") as file:
+                file.write(cipher.nonce)
+                file.write(tag)
+                file.write(encrypted_data)
+
+            print(f"File encrypted successfully using AES-{self.key_size}.")
+            print("Encrypted file: encrypted.bin")
+
+        except FileNotFoundError:
+            print("Error: plain.txt file not found.")
+
+        except Exception as error:
+            print("Encryption error:", error)
+
+    def decrypt_file_AES(self):
+        try:
+            with open("encrypted.bin", "rb") as file:
+                nonce = file.read(16)
+                tag = file.read(16)
+                encrypted_data = file.read()
+
+            cipher = AES.new(self.key, AES.MODE_EAX, nonce=nonce)
+            decrypted_data = cipher.decrypt_and_verify(encrypted_data, tag)
+
+            with open("decrypted.txt", "wb") as file:
+                file.write(decrypted_data)
+
+            print(f"File decrypted successfully using AES-{self.key_size}.")
+            print("Decrypted file: decrypted.txt")
+
+        except FileNotFoundError:
+            print("Error: encrypted.bin file not found.")
+
+        except ValueError:
+            print("Error: wrong password, wrong AES size, or corrupted file.")
+
+        except Exception as error:
+            print("Decryption error:", error)
+
+
+ 
+ 
+
+
 
 class RSA:
     def __init__(self, key_size=2048):
