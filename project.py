@@ -4,24 +4,30 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import os
 import base64
-from Crypto.Cipher import AES
+from Crypto.Cipher import AES as CryptoAES
 from Crypto.Hash import SHA256
 
 class AES:
-    def _init_(self, password, key_size):
+    def __init__(self, password, key_size):
+        self.password = password
         self.key_size = key_size
-        hashed_password = SHA256.new(password.encode()).digest()
-        self.key = hashed_password[:key_size // 8]
+
+    def derive_key(self, salt):
+        hashed_password = SHA256.new(salt + self.password.encode()).digest()
+        return hashed_password[: self.key_size // 8]
 
     def encrypt_file(self, input_file_path, output_file_path):
         try:
             with open(input_file_path, "rb") as file:
                 original_data = file.read()
 
-            cipher = AES.new(self.key, AES.MODE_EAX)
+            salt = os.urandom(16)
+            key = self.derive_key(salt)
+            cipher = CryptoAES.new(key, CryptoAES.MODE_EAX)
             encrypted_data, tag = cipher.encrypt_and_digest(original_data)
 
             with open(output_file_path, "wb") as file:
+                file.write(salt)
                 file.write(cipher.nonce)
                 file.write(tag)
                 file.write(encrypted_data)
@@ -37,11 +43,13 @@ class AES:
     def decrypt_file(self, input_file_path, output_file_path):
         try:
             with open(input_file_path, "rb") as file:
+                salt = file.read(16)
                 nonce = file.read(16)
                 tag = file.read(16)
                 encrypted_data = file.read()
 
-            cipher = AES.new(self.key, AES.MODE_EAX, nonce=nonce)
+            key = self.derive_key(salt)
+            cipher = CryptoAES.new(key, CryptoAES.MODE_EAX, nonce=nonce)
             decrypted_data = cipher.decrypt_and_verify(encrypted_data, tag)
 
             with open(output_file_path, "wb") as file:
@@ -65,7 +73,7 @@ class AES:
 user_password = input("Enter password: ")
 user_key_size = int(input("Choose AES key size 128 / 192 / 256: "))
 
-aes_tool = SimpleAES(user_password, user_key_size)
+aes_tool = AES(user_password, user_key_size)
 
 aes_tool.encrypt_file("plain.txt", "encrypted.bin")
 aes_tool.decrypt_file("encrypted.bin", "decrypted.txt")
