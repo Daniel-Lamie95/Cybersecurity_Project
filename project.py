@@ -4,6 +4,72 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import os
 import base64
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+
+class AES:
+    def _init_(self, password, key_size):
+        self.key_size = key_size
+        hashed_password = SHA256.new(password.encode()).digest()
+        self.key = hashed_password[:key_size // 8]
+
+    def encrypt_file(self, input_file_path, output_file_path):
+        try:
+            with open(input_file_path, "rb") as file:
+                original_data = file.read()
+
+            cipher = AES.new(self.key, AES.MODE_EAX)
+            encrypted_data, tag = cipher.encrypt_and_digest(original_data)
+
+            with open(output_file_path, "wb") as file:
+                file.write(cipher.nonce)
+                file.write(tag)
+                file.write(encrypted_data)
+
+            print(f"File encrypted successfully using AES-{self.key_size}.")
+
+        except FileNotFoundError:
+            print("Error: Input file not found.")
+
+        except Exception as error:
+            print("Encryption error:", error)
+
+    def decrypt_file(self, input_file_path, output_file_path):
+        try:
+            with open(input_file_path, "rb") as file:
+                nonce = file.read(16)
+                tag = file.read(16)
+                encrypted_data = file.read()
+
+            cipher = AES.new(self.key, AES.MODE_EAX, nonce=nonce)
+            decrypted_data = cipher.decrypt_and_verify(encrypted_data, tag)
+
+            with open(output_file_path, "wb") as file:
+                file.write(decrypted_data)
+
+            print(f"File decrypted successfully using AES-{self.key_size}.")
+            print("Decrypted content:")
+            print(decrypted_data.decode())
+
+        except FileNotFoundError:
+            print("Error: Encrypted file not found.")
+
+        except ValueError:
+            print("Error: Wrong password, wrong AES size, or file was modified.")
+
+        except Exception as error:
+            print("Decryption error:", error)
+
+
+# Main program
+user_password = input("Enter password: ")
+user_key_size = int(input("Choose AES key size 128 / 192 / 256: "))
+
+aes_tool = SimpleAES(user_password, user_key_size)
+
+aes_tool.encrypt_file("plain.txt", "encrypted.bin")
+aes_tool.decrypt_file("encrypted.bin", "decrypted.txt")
+
 
 class RSA:
     def __init__(self, key_size=2048):
