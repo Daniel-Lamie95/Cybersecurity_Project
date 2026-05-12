@@ -69,14 +69,15 @@ class AES:
             print("Decryption error:", error)
 
 
-# Main program
-user_password = input("Enter password: ")
-user_key_size = int(input("Choose AES key size 128 / 192 / 256: "))
+if __name__ == "__main__":
+    # Keep the demo CLI behavior available, but prevent it from running on import.
+    user_password = input("Enter password: ")
+    user_key_size = int(input("Choose AES key size 128 / 192 / 256: "))
 
-aes_tool = AES(user_password, user_key_size)
+    aes_tool = AES(user_password, user_key_size)
 
-aes_tool.encrypt_file("plain.txt", "encrypted.bin")
-aes_tool.decrypt_file("encrypted.bin", "decrypted.txt")
+    aes_tool.encrypt_file("plain.txt", "encrypted.bin")
+    aes_tool.decrypt_file("encrypted.bin", "decrypted.txt")
 
 
 class RSA:
@@ -95,7 +96,7 @@ class RSA:
         self.public_key = self.private_key.public_key()
         print("Keys generated successfully!")
 
-    def save_Keys(self,private_key_path = "private_key.perm", public_key_path = "public_key.perm", password = None):
+    def save_Keys(self,private_key_path = "private_key.pem", public_key_path = "public_key.pem", password = None):
 
         if not self.private_key or not self.public_key:
             print("No keys to save")
@@ -124,6 +125,11 @@ class RSA:
 
         print(f"Saved private -> {private_key_path}, public -> {public_key_path}")
         return True
+
+    def _max_oaep_plaintext_size(self):
+        key_bytes = self.key_size // 8
+        hash_bytes = hashes.SHA256().digest_size
+        return key_bytes - (2 * hash_bytes) - 2
           
     def load_Keys(self, private_key_path="private_key.pem", public_key_path="public_key.pem", password=None):
         try:
@@ -208,10 +214,16 @@ class RSA:
             with open(file_path, 'rb') as f:
                 plaintext = f.read()
 
-            ciphertext = self.encrypt_text(plaintext)
+            max_chunk = self._max_oaep_plaintext_size()
+            ciphertext_chunks = []
+            for i in range(0, len(plaintext), max_chunk):
+                chunk = plaintext[i:i + max_chunk]
+                encrypted_chunk = self.encrypt_text(chunk)
+                if encrypted_chunk is None:
+                    return False
+                ciphertext_chunks.append(encrypted_chunk)
 
-            if ciphertext is None:
-                return False
+            ciphertext = b"".join(ciphertext_chunks)
 
             with open(output_path, "wb") as f:
                 f.write(ciphertext)
@@ -235,9 +247,20 @@ class RSA:
             with open(file_path, "rb") as f:
                 ciphertext = f.read()
 
-            plaintext = self.decrypt_text(ciphertext)
-            if plaintext is None:
+            key_bytes = self.key_size // 8
+            if len(ciphertext) == 0 or len(ciphertext) % key_bytes != 0:
+                print("Invalid RSA encrypted file format")
                 return False
+
+            plaintext_chunks = []
+            for i in range(0, len(ciphertext), key_bytes):
+                chunk = ciphertext[i:i + key_bytes]
+                decrypted_chunk = self.decrypt_text(chunk)
+                if decrypted_chunk is None:
+                    return False
+                plaintext_chunks.append(decrypted_chunk)
+
+            plaintext = b"".join(plaintext_chunks)
 
             with open(output_path, "wb") as f:
                 f.write(plaintext)

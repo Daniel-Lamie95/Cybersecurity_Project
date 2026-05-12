@@ -75,7 +75,9 @@ class WorkerThread(QThread):
 
     def run(self):
         try:
-            self.func(*self.args)
+            result = self.func(*self.args)
+            if result is False:
+                raise RuntimeError("Operation failed")
             self.finished.emit(True, "Task Completed Successfully")
         except Exception as e:
             self.error.emit(str(e))
@@ -175,6 +177,8 @@ class EncryptionWindow(QMainWindow):
         self.rsa_tool = RSA()
         self.setStyleSheet(MODERN_STYLE)
         self.init_ui()
+        if self.rsa_tool.load_Keys():
+            self.log_box.append("SYSTEM: Existing RSA keys loaded")
 
     def init_ui(self):
         self.setWindowTitle(f"ShieldCrypt Pro - {self.username}")
@@ -276,6 +280,15 @@ class EncryptionWindow(QMainWindow):
         self.rsa_tool.save_Keys()
         self.log_box.append("SYSTEM: RSA Keypair generated and saved to folder")
 
+    def ensure_rsa_ready(self):
+        if self.rsa_tool.private_key and self.rsa_tool.public_key:
+            return True
+        if self.rsa_tool.load_Keys():
+            self.log_box.append("SYSTEM: RSA keys loaded from files")
+            return True
+        self.log_box.append("ERROR: RSA keys not found. Generate keys first.")
+        return False
+
     def get_file(self):
         p, _ = QFileDialog.getOpenFileName(self, "Open Data File")
         if p:
@@ -286,16 +299,22 @@ class EncryptionWindow(QMainWindow):
         if not hasattr(self, 'file_path'): return
         out = self.file_path + ".enc"
         tool = self.aes_tool if self.aes_group.isVisible() else self.rsa_tool
+        if tool is self.rsa_tool and not self.ensure_rsa_ready():
+            return
         self.worker = WorkerThread(tool.encrypt_file, self.file_path, out)
         self.worker.finished.connect(lambda s, m: self.log_box.append(f"SUCCESS: {m}"))
+        self.worker.error.connect(lambda e: self.log_box.append(f"ERROR: {e}"))
         self.worker.start()
 
     def run_decrypt(self):
         if not hasattr(self, 'file_path'): return
         out = self.file_path.replace(".enc", "_decrypted.txt")
         tool = self.aes_tool if self.aes_group.isVisible() else self.rsa_tool
+        if tool is self.rsa_tool and not self.ensure_rsa_ready():
+            return
         self.worker = WorkerThread(tool.decrypt_file, self.file_path, out)
         self.worker.finished.connect(lambda s, m: self.log_box.append(f"SUCCESS: {m}"))
+        self.worker.error.connect(lambda e: self.log_box.append(f"ERROR: {e}"))
         self.worker.start()
 
 if __name__ == "__main__":
