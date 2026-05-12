@@ -95,24 +95,26 @@ def is_strong_password(password):
 
 if __name__ == "__main__":
     # Keep the demo CLI behavior available, but prevent it from running on import.
-  while True:
+                
+ if __name__ == "__main__":
 
-    user_password = input("Enter password: ")
+    while True:
 
-    if is_strong_password(user_password):
-        print("Strong password accepted ✅")
-        break
+        user_password = input("Enter password: ")
 
-    else:
-        print("Please try again.\n")
+        if is_strong_password(user_password):
+            print("Strong password accepted ✅")
+            break
+
+        else:
+            print("Please try again.\n")
+
     user_key_size = int(input("Choose AES key size 128 / 192 / 256: "))
 
     aes_tool = AES(user_password, user_key_size)
 
     aes_tool.encrypt_file("plain.txt", "encrypted.bin")
     aes_tool.decrypt_file("encrypted.bin", "decrypted.txt")
-
-
 class RSA:
     def __init__(self, key_size=2048):
         self.key_size = key_size
