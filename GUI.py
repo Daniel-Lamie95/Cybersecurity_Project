@@ -14,36 +14,36 @@ MODERN_STYLE = """
     
     QFrame#Card { 
         background-color: #313244; 
-        border-radius: 15px; 
-        padding: 25px; 
-        margin: 5px;
+        border-radius: 25px; 
+        padding: 40px; 
+        margin: 15px;
     }
     
-    QLabel { font-size: 15px; }
-    QLabel#Header { font-size: 32px; font-weight: bold; color: #89b4fa; margin-bottom: 10px; }
+    QLabel { font-size: 18px; }
+    QLabel#Header { font-size: 48px; font-weight: bold; color: #89b4fa; margin-bottom: 30px; }
     
     QLineEdit { 
         background-color: #45475a; 
         border: 2px solid #585b70; 
-        border-radius: 10px; 
-        padding: 12px; 
+        border-radius: 15px; 
+        padding: 20px; 
         color: white; 
-        font-size: 14px;
+        font-size: 20px;
     }
-    QLineEdit:focus { border: 2px solid #89b4fa; }
+    QLineEdit:focus { border: 3px solid #89b4fa; }
 
     QPushButton { 
         background-color: #89b4fa; 
         color: #1e1e2e; 
         font-weight: bold; 
-        border-radius: 10px; 
-        padding: 15px; 
-        font-size: 14px;
+        border-radius: 15px; 
+        padding: 25px; 
+        font-size: 20px;
     }
     QPushButton:hover { background-color: #b4befe; }
     QPushButton:disabled { background-color: #585b70; color: #7f849c; }
     
-    QPushButton#ActionBtn { background-color: #a6e3a1; color: #11111b; font-size: 16px; }
+    QPushButton#ActionBtn { background-color: #a6e3a1; color: #11111b; font-size: 22px; }
     QPushButton#SecondaryBtn { background-color: #f9e2af; color: #11111b; font-size: 16px; }
 
     QComboBox, QSpinBox { 
