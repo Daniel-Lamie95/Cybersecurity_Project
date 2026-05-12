@@ -247,12 +247,12 @@ class EncryptionWindow(QMainWindow):
         btn_box = QHBoxLayout()
         self.btn_enc = QPushButton("ENCRYPT FILE")
         self.btn_enc.setObjectName("ActionBtn")
-        self.btn_enc.setFixedHeight(60)
+        self.btn_enc.setFixedHeight(80)
         self.btn_enc.clicked.connect(self.run_encrypt)
         
         self.btn_dec = QPushButton("DECRYPT FILE")
         self.btn_dec.setObjectName("SecondaryBtn")
-        self.btn_dec.setFixedHeight(60)
+        self.btn_dec.setFixedHeight(80)
         self.btn_dec.clicked.connect(self.run_decrypt)
         
         btn_box.addWidget(self.btn_enc)
