@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import os
+import re
 import base64
 from Crypto.Cipher import AES as CryptoAES
 from Crypto.Hash import SHA256
@@ -68,10 +69,42 @@ class AES:
         except Exception as error:
             print("Decryption error:", error)
 
+def is_strong_password(password):
+
+    if len(password) < 8:
+        print("Password must be at least 8 characters.")
+        return False
+
+    if not re.search(r"[A-Z]", password):
+        print("Password must contain an uppercase letter.")
+        return False
+
+    if not re.search(r"[a-z]", password):
+        print("Password must contain a lowercase letter.")
+        return False
+
+    if not re.search(r"[0-9]", password):
+        print("Password must contain a number.")
+        return False
+
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        print("Password must contain a special character.")
+        return False
+
+    return True
 
 if __name__ == "__main__":
     # Keep the demo CLI behavior available, but prevent it from running on import.
+  while True:
+
     user_password = input("Enter password: ")
+
+    if is_strong_password(user_password):
+        print("Strong password accepted ✅")
+        break
+
+    else:
+        print("Please try again.\n")
     user_key_size = int(input("Choose AES key size 128 / 192 / 256: "))
 
     aes_tool = AES(user_password, user_key_size)
