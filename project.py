@@ -150,7 +150,7 @@ class RSA:
         with open(private_key_path, "wb") as f:
             f.write(priv_pem)    
         
-        #public key serialization
+        # public key serialization
         pub_pem = self.public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
@@ -160,7 +160,7 @@ class RSA:
 
         print(f"Saved private -> {private_key_path}, public -> {public_key_path}")
         return True
-
+    # for encrypting in batches 
     def _max_oaep_plaintext_size(self):
         key_bytes = self.key_size // 8
         hash_bytes = hashes.SHA256().digest_size
@@ -207,7 +207,7 @@ class RSA:
                 plaintext = plaintext.encode()
 
             ciphertext = self.public_key.encrypt(
-                plaintext,
+                plaintext, #add noise to the data to make it more secure
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
@@ -237,6 +237,7 @@ class RSA:
             print("Decryption failed:", e)
             return None
 
+    # For encrypting and decrypting files in batches to handle large files that exceed RSA limits
     def encrypt_file(self, file_path, output_path=None):
         if not self.public_key:
             print("Public key not available for encryption")
@@ -251,6 +252,9 @@ class RSA:
 
             max_chunk = self._max_oaep_plaintext_size()
             ciphertext_chunks = []
+            #loops for the plaintext in chunks of max_chunk size, encrypts each chunk, 
+            # appends the encrypted   chunk to the ciphertext chunks list. 
+            # it joins all the encrypted chunks together and writes the complete ciphertext to the output file.
             for i in range(0, len(plaintext), max_chunk):
                 chunk = plaintext[i:i + max_chunk]
                 encrypted_chunk = self.encrypt_text(chunk)
