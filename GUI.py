@@ -69,8 +69,11 @@ class WorkerThread(QThread):
         self.args = args
     def run(self):
         try:
-            self.func(*self.args)
-            self.finished.emit(True, "Task Completed Successfully")
+            result = self.func(*self.args)
+            if result is False:
+                self.finished.emit(False, "Task failed. Check the console for details.")
+            else:
+                self.finished.emit(True, "Task Completed Successfully")
         except Exception as e:
             self.finished.emit(False, str(e))
 
@@ -248,8 +251,13 @@ class EncryptionWindow(QMainWindow):
         self.aes_group.setVisible(is_aes); self.rsa_group.setVisible(not is_aes)
 
     def init_aes(self):
+        password = self.aes_pass.text()
+        if not password:
+            QMessageBox.warning(self, "Missing password", "Enter an AES password before setting the key.")
+            return
+
         bits = int(self.mechanism.currentText().split("-")[1])
-        self.aes_tool = AES(self.aes_pass.text(), bits)
+        self.aes_tool = AES(password, bits)
         self.log_box.append(f"SYSTEM: AES-{bits} engine ready.")
 
     def init_rsa(self):
@@ -261,9 +269,24 @@ class EncryptionWindow(QMainWindow):
         if p: self.file_path = p; self.file_info.setText(f"Target: {os.path.basename(p)}")
 
     def process(self, encrypt=True):
-        if not hasattr(self, 'file_path'): return
+        if not hasattr(self, 'file_path'):
+            QMessageBox.warning(self, "No file selected", "Select a file before starting the operation.")
+            return
+
         out = self.file_path + (".enc" if encrypt else "_decrypted.txt")
-        tool = self.aes_tool if "AES" in self.mechanism.currentText() else self.rsa_tool
+
+        if "AES" in self.mechanism.currentText():
+            if self.aes_tool is None:
+                QMessageBox.warning(
+                    self,
+                    "AES key not set",
+                    "Enter an AES password and click Set Key before encrypting or decrypting."
+                )
+                return
+            tool = self.aes_tool
+        else:
+            tool = self.rsa_tool
+
         func = tool.encrypt_file if encrypt else tool.decrypt_file
         self.worker = WorkerThread(func, self.file_path, out)
         self.worker.finished.connect(lambda s, m: self.log_box.append(f"STATUS: {m}"))

@@ -34,12 +34,15 @@ class AES:
                 file.write(encrypted_data)
 
             print(f"File encrypted successfully using AES-{self.key_size}.")
+            return True
 
         except FileNotFoundError:
             print("Error: Input file not found.")
+            return False
 
         except Exception as error:
             print("Encryption error:", error)
+            return False
 
     def decrypt_file(self, input_file_path, output_file_path):
         try:
@@ -59,15 +62,19 @@ class AES:
             print(f"File decrypted successfully using AES-{self.key_size}.")
             print("Decrypted content:")
             print(decrypted_data.decode())
+            return True
 
         except FileNotFoundError:
             print("Error: Encrypted file not found.")
+            return False
 
         except ValueError:
             print("Error: Wrong password, wrong AES size, or file was modified.")
+            return False
 
         except Exception as error:
             print("Decryption error:", error)
+            return False
 
 def is_strong_password(password):
 
@@ -123,6 +130,7 @@ class RSA:
     
     def generate_Keys(self):
         self.private_key = rsa.generate_private_key(
+            #the public exponent (often denoted as e) is one of two numbers that make up a user's public key.
             public_exponent=65537,
             key_size=self.key_size,
             backend=default_backend()
@@ -310,7 +318,6 @@ class RSA:
         except Exception as e:
             print("Decryption failed:", e)
             return False    
-
 
 
 
